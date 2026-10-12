@@ -3,26 +3,47 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>サロンのなつかし昭和クイズ</title>
+  <title>柏原サロン 昭和なつかしクイズ</title>
   <style>
     body {
       margin: 0;
-      padding: 20px;
-      background-color: #fcf9f2;
+      padding: 20px 16px;
+      background-color: #fbf8f1;
       font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
       color: #333;
       display: flex;
-      justify-content: center;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+    .header-bar {
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    .salon-name {
+      font-size: 20px;
+      font-weight: bold;
+      color: #5a7260;
+      letter-spacing: 1px;
+    }
+    .app-title {
+      font-size: 26px;
+      font-weight: 800;
+      color: #2c3e50;
+      margin-top: 4px;
     }
     .card {
       background: #ffffff;
       border-radius: 20px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.06);
       max-width: 480px;
       width: 100%;
       padding: 24px;
       box-sizing: border-box;
-      border: 2px solid #f0e6d6;
+      border: 2px solid #eee4d5;
     }
     .badge {
       display: inline-block;
@@ -30,9 +51,9 @@
       color: white;
       padding: 6px 14px;
       border-radius: 20px;
-      font-size: 16px;
+      font-size: 15px;
       font-weight: bold;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
     }
     .question {
       font-size: 22px;
@@ -44,10 +65,10 @@
     .choice-btn {
       display: block;
       width: 100%;
-      background: #fdfbf7;
-      border: 2px solid #d8cfc4;
+      background: #fdfcf9;
+      border: 2px solid #dcd3c7;
       border-radius: 14px;
-      padding: 16px;
+      padding: 16px 18px;
       margin-bottom: 12px;
       font-size: 19px;
       text-align: left;
@@ -81,7 +102,7 @@
       display: none;
       width: 100%;
       margin-top: 20px;
-      background: #85a389;
+      background: #5a7260;
       color: white;
       border: none;
       border-radius: 14px;
@@ -90,22 +111,44 @@
       font-weight: bold;
       cursor: pointer;
     }
+    .footer-bar {
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+      margin-top: 24px;
+      font-size: 14px;
+      color: #7d8a80;
+      line-height: 1.6;
+    }
   </style>
 </head>
 <body>
 
-<div class="card">
-  <div class="badge" id="category">暮らしのなつかしクイズ</div>
-  <div class="question" id="question">問題を読み込み中...</div>
-  <div id="choices"></div>
-
-  <div class="result-box" id="result-box">
-    <div class="result-title" id="result-title"></div>
-    <div class="explanation" id="explanation"></div>
+  <!-- ヘッダー部分 -->
+  <div class="header-bar">
+    <div class="salon-name">🌸 柏原サロン 🌸</div>
+    <div class="app-title">昭和なつかしクイズ</div>
   </div>
 
-  <button class="next-btn" id="next-btn" onclick="nextQuestion()">次の問題へ進む 🌸</button>
-</div>
+  <!-- クイズ本体カード -->
+  <div class="card">
+    <div class="badge" id="category">暮らしのなつかしクイズ</div>
+    <div class="question" id="question">問題を読み込み中...</div>
+    <div id="choices"></div>
+
+    <div class="result-box" id="result-box">
+      <div class="result-title" id="result-title"></div>
+      <div class="explanation" id="explanation"></div>
+    </div>
+
+    <button class="next-btn" id="next-btn" onclick="nextQuestion()">次の問題へ進む 🌸</button>
+  </div>
+
+  <!-- フッター（作成者クレジット） -->
+  <div class="footer-bar">
+    柏原サロン専用アプリ<br>
+    企画・作成：田中裕之
+  </div>
 
 <script>
   const quizData = [
