@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>サロンのなつかし昭和クイズ</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      background-color: #fcf9f2;
+      font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+      color: #333;
+      display: flex;
+      justify-content: center;
+    }
+    .card {
+      background: #ffffff;
+      border-radius: 20px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+      max-width: 480px;
+      width: 100%;
+      padding: 24px;
+      box-sizing: border-box;
+      border: 2px solid #f0e6d6;
+    }
+    .badge {
+      display: inline-block;
+      background-color: #e27d60;
+      color: white;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 12px;
+    }
+    .question {
+      font-size: 22px;
+      line-height: 1.5;
+      font-weight: bold;
+      margin-bottom: 24px;
+      color: #2c3e50;
+    }
+    .choice-btn {
+      display: block;
+      width: 100%;
+      background: #fdfbf7;
+      border: 2px solid #d8cfc4;
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 12px;
+      font-size: 19px;
+      text-align: left;
+      cursor: pointer;
+      color: #333;
+      transition: all 0.2s;
+    }
+    .choice-btn:active {
+      background: #f0e6d6;
+      transform: scale(0.98);
+    }
+    .result-box {
+      display: none;
+      margin-top: 18px;
+      padding: 18px;
+      border-radius: 14px;
+      background-color: #f7f9f4;
+      border-left: 6px solid #85a389;
+    }
+    .result-title {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+    .explanation {
+      font-size: 17px;
+      line-height: 1.6;
+      color: #4a5568;
+    }
+    .next-btn {
+      display: none;
+      width: 100%;
+      margin-top: 20px;
+      background: #85a389;
+      color: white;
+      border: none;
+      border-radius: 14px;
+      padding: 16px;
+      font-size: 20px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <div class="badge" id="category">暮らしのなつかしクイズ</div>
+  <div class="question" id="question">問題を読み込み中...</div>
+  <div id="choices"></div>
+
+  <div class="result-box" id="result-box">
+    <div class="result-title" id="result-title"></div>
+    <div class="explanation" id="explanation"></div>
+  </div>
+
+  <button class="next-btn" id="next-btn" onclick="nextQuestion()">次の問題へ進む 🌸</button>
+</div>
+
+<script>
+  const quizData = [
+    {
+      category: "懐かしの暮らし",
+      question: "昭和の茶の間、四角い木枠のテレビの上に必ずと言っていいほど掛けられていたものは何？",
+      choices: ["レースの白いカバー", "唐草模様の風呂敷", "毛糸の手編み座布団"],
+      correct: 0,
+      talk: "ホコリよけとおしゃれを兼ねて、お母さんやおばあちゃんが手編みした白いレースカバーが定番でしたね！みなさんのお家にもありましたか？"
+    },
+    {
+      category: "あの頃の流行歌",
+      question: "昭和38年（1963年）、「こんにちは赤ちゃん」が大ヒットして日本レコード大賞を受賞した歌手はだれ？",
+      choices: ["梓みちよ", "吉永小百合", "美空ひばり"],
+      correct: 0,
+      talk: "梓みちよさんの爽やかな歌声が日本中をあたたかい気持ちにしました。当時ラジオやレコードで口ずさんだ思い出はありませんか？"
+    },
+    {
+      category: "昭和の思い出",
+      question: "昭和30年代に登場し、腕にくっつけて街を歩く若者が続出して社会現象になった人形は？",
+      choices: ["ダッコちゃん", "リカちゃん", "モンチッチ"],
+      correct: 0,
+      talk: "黒いビニール製の「ダッコちゃん」人形です！デパートに行列ができて、腕につけて歩くのが大流行しましたね。"
+    }
+  ];
+
+  let currentIndex = 0;
+
+  function loadQuestion() {
+    const q = quizData[currentIndex];
+    document.getElementById('category').textContent = q.category;
+    document.getElementById('question').textContent = q.question;
+    document.getElementById('result-box').style.display = 'none';
+    document.getElementById('next-btn').style.display = 'none';
+
+    const choicesContainer = document.getElementById('choices');
+    choicesContainer.innerHTML = '';
+
+    q.choices.forEach((choice, index) => {
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.textContent = `${index + 1}. ${choice}`;
+      btn.onclick = () => checkAnswer(index);
+      choicesContainer.appendChild(btn);
+    });
+  }
+
+  function checkAnswer(selectedIndex) {
+    const q = quizData[currentIndex];
+    const isCorrect = selectedIndex === q.correct;
+    
+    const buttons = document.querySelectorAll('.choice-btn');
+    buttons.forEach(btn => btn.disabled = true);
+
+    const titleEl = document.getElementById('result-title');
+    titleEl.textContent = isCorrect ? "大正解！🎉" : "おしい！🌸";
+    titleEl.style.color = isCorrect ? "#e27d60" : "#718096";
+
+    document.getElementById('explanation').innerHTML = 
+      `<strong>【正解：${q.choices[q.correct]}】</strong><br><br>${q.talk}`;
+
+    document.getElementById('result-box').style.display = 'block';
+    document.getElementById('next-btn').style.display = 'block';
+  }
+
+  function nextQuestion() {
+    currentIndex = (currentIndex + 1) % quizData.length;
+    loadQuestion();
+  }
+
+  loadQuestion();
+</script>
+
+</body>
+</html>
