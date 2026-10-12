@@ -35,6 +35,30 @@
       color: #2c3e50;
       margin-top: 4px;
     }
+    .genre-nav {
+      max-width: 480px;
+      width: 100%;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+    .genre-btn {
+      background: #ffffff;
+      border: 1.5px solid #d4c8b8;
+      border-radius: 18px;
+      padding: 8px 14px;
+      font-size: 14px;
+      font-weight: bold;
+      color: #555;
+      cursor: pointer;
+    }
+    .genre-btn.active {
+      background: #5a7260;
+      color: #ffffff;
+      border-color: #5a7260;
+    }
     .card {
       background: #ffffff;
       border-radius: 20px;
@@ -55,12 +79,20 @@
       font-weight: bold;
       margin-bottom: 14px;
     }
+    .question-count {
+      float: right;
+      font-size: 14px;
+      color: #7d8a80;
+      font-weight: bold;
+      margin-top: 6px;
+    }
     .question {
       font-size: 22px;
       line-height: 1.5;
       font-weight: bold;
       margin-bottom: 24px;
       color: #2c3e50;
+      clear: both;
     }
     .choice-btn {
       display: block;
@@ -111,7 +143,6 @@
       font-weight: bold;
       cursor: pointer;
     }
-    /* QRコードと案内エリア */
     .share-section {
       max-width: 480px;
       width: 100%;
@@ -163,10 +194,21 @@
     <div class="app-title">昭和なつかしクイズ</div>
   </div>
 
+  <!-- ジャンル切り替えボタン -->
+  <div class="genre-nav">
+    <button class="genre-btn active" onclick="selectGenre('all')">全問おまかせ</button>
+    <button class="genre-btn" onclick="selectGenre('暮らし')">暮らし</button>
+    <button class="genre-btn" onclick="selectGenre('音楽')">歌謡曲</button>
+    <button class="genre-btn" onclick="selectGenre('テレビ・芸能')">芸能・TV</button>
+    <button class="genre-btn" onclick="selectGenre('出来事・スポーツ')">出来事</button>
+    <button class="genre-btn" onclick="selectGenre('学校・おやつ')">おやつ・遊び</button>
+  </div>
+
   <!-- クイズカード -->
   <div class="card">
-    <div class="badge" id="category">暮らしのなつかしクイズ</div>
-    <div class="question" id="question">問題を読み込み中...</div>
+    <span class="question-count" id="q-counter"></span>
+    <div class="badge" id="category">読み込み中...</div>
+    <div class="question" id="question">問題を準備しています...</div>
     <div id="choices"></div>
 
     <div class="result-box" id="result-box">
@@ -186,83 +228,116 @@
          alt="サロンクイズのQRコード">
   </div>
 
-  <!-- フッター（お試し版・作者クレジット） -->
+  <!-- フッター -->
   <div class="footer-bar">
     ※本アプリは個人の趣味による試作・テスト版です。<br>
     企画・作成：田中裕之（柏原サロン）
   </div>
 
-<script>
-  const quizData = [
-    {
-      category: "懐かしの暮らし",
-      question: "昭和の茶の間、四角い木枠のテレビの上に必ずと言っていいほど掛けられていたものは何？",
-      choices: ["レースの白いカバー", "唐草模様の風呂敷", "毛糸の手編み座布団"],
-      correct: 0,
-      talk: "ホコリよけとおしゃれを兼ねて、お母さんやおばあちゃんが手編みした白いレースカバーが定番でしたね！みなさんのお家にもありましたか？"
-    },
-    {
-      category: "あの頃の流行歌",
-      question: "昭和38年（1963年）、「こんにちは赤ちゃん」が大ヒットして日本レコード大賞を受賞した歌手はだれ？",
-      choices: ["梓みちよ", "吉永小百合", "美空ひばり"],
-      correct: 0,
-      talk: "梓みちよさんの爽やかな歌声が日本中をあたたかい気持ちにしました。当時ラジオやレコードで口ずさんだ思い出はありませんか？"
-    },
-    {
-      category: "昭和の思い出",
-      question: "昭和30年代に登場し、腕にくっつけて街を歩く若者が続出して社会現象になった人形は？",
-      choices: ["ダッコちゃん", "リカちゃん", "モンチッチ"],
-      correct: 0,
-      talk: "黒いビニール製の「ダッコちゃん」人形です！デパートに行列ができて、腕につけて歩くのが大流行しましたね。"
+  <!-- クイズデータ読み込み -->
+  <script src="quiz-data.js"></script>
+
+  <script>
+    let currentGenre = 'all';
+    let quizList = [];
+    let currentIndex = 0;
+    const QUIZ_LIMIT = 10; // 1回あたりの出題数
+
+    function shuffleArray(array) {
+      const arr = [...array];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
     }
-  ];
 
-  let currentIndex = 0;
+    function selectGenre(genre) {
+      currentGenre = genre;
+      
+      // ボタンの見た目切り替え
+      const buttons = document.querySelectorAll('.genre-btn');
+      buttons.forEach(btn => {
+        if ((genre === 'all' && btn.textContent === '全問おまかせ') || btn.textContent.includes(genre)) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
 
-  function loadQuestion() {
-    const q = quizData[currentIndex];
-    document.getElementById('category').textContent = q.category;
-    document.getElementById('question').textContent = q.question;
-    document.getElementById('result-box').style.display = 'none';
-    document.getElementById('next-btn').style.display = 'none';
+      initQuiz();
+    }
 
-    const choicesContainer = document.getElementById('choices');
-    choicesContainer.innerHTML = '';
+    function initQuiz() {
+      let filtered = (currentGenre === 'all') 
+        ? allQuizData 
+        : allQuizData.filter(q => q.genre === currentGenre);
 
-    q.choices.forEach((choice, index) => {
-      const btn = document.createElement('button');
-      btn.className = 'choice-btn';
-      btn.textContent = `${index + 1}. ${choice}`;
-      btn.onclick = () => checkAnswer(index);
-      choicesContainer.appendChild(btn);
-    });
-  }
+      // シャッフルして最大10問を抽出
+      quizList = shuffleArray(filtered).slice(0, QUIZ_LIMIT);
+      currentIndex = 0;
+      loadQuestion();
+    }
 
-  function checkAnswer(selectedIndex) {
-    const q = quizData[currentIndex];
-    const isCorrect = selectedIndex === q.correct;
-    
-    const buttons = document.querySelectorAll('.choice-btn');
-    buttons.forEach(btn => btn.disabled = true);
+    function loadQuestion() {
+      const q = quizList[currentIndex];
+      document.getElementById('q-counter').textContent = `第 ${currentIndex + 1} 問 / 全 ${quizList.length} 問`;
+      document.getElementById('category').textContent = q.genre;
+      document.getElementById('question').textContent = q.question;
+      document.getElementById('result-box').style.display = 'none';
+      document.getElementById('next-btn').style.display = 'none';
 
-    const titleEl = document.getElementById('result-title');
-    titleEl.textContent = isCorrect ? "大正解！🎉" : "おしい！🌸";
-    titleEl.style.color = isCorrect ? "#e27d60" : "#718096";
+      const choicesContainer = document.getElementById('choices');
+      choicesContainer.innerHTML = '';
 
-    document.getElementById('explanation').innerHTML = 
-      `<strong>【正解：${q.choices[q.correct]}】</strong><br><br>${q.talk}`;
+      q.choices.forEach((choice, index) => {
+        const btn = document.createElement('button');
+        btn.className = 'choice-btn';
+        btn.textContent = `${index + 1}. ${choice}`;
+        btn.onclick = () => checkAnswer(index);
+        choicesContainer.appendChild(btn);
+      });
+    }
 
-    document.getElementById('result-box').style.display = 'block';
-    document.getElementById('next-btn').style.display = 'block';
-  }
+    function checkAnswer(selectedIndex) {
+      const q = quizList[currentIndex];
+      const isCorrect = selectedIndex === q.correct;
+      
+      const buttons = document.querySelectorAll('.choice-btn');
+      buttons.forEach(btn => btn.disabled = true);
 
-  function nextQuestion() {
-    currentIndex = (currentIndex + 1) % quizData.length;
-    loadQuestion();
-  }
+      const titleEl = document.getElementById('result-title');
+      titleEl.textContent = isCorrect ? "大正解！🎉" : "おしい！🌸";
+      titleEl.style.color = isCorrect ? "#e27d60" : "#718096";
 
-  loadQuestion();
-</script>
+      document.getElementById('explanation').innerHTML = 
+        `<strong>【正解：${q.choices[q.correct]}】</strong><br><br>${q.talk}`;
+
+      document.getElementById('result-box').style.display = 'block';
+
+      const nextBtn = document.getElementById('next-btn');
+      if (currentIndex + 1 < quizList.length) {
+        nextBtn.textContent = "次の問題へ進む 🌸";
+      } else {
+        nextBtn.textContent = "この回は終了！もう一度遊ぶ（シャッフル）🔄";
+      }
+      nextBtn.style.display = 'block';
+    }
+
+    function nextQuestion() {
+      currentIndex++;
+      if (currentIndex >= quizList.length) {
+        initQuiz();
+      } else {
+        loadQuestion();
+      }
+    }
+
+    // 起動
+    window.onload = () => {
+      initQuiz();
+    };
+  </script>
 
 </body>
 </html>
