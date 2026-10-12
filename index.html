@@ -7,7 +7,7 @@
   <style>
     body {
       margin: 0;
-      padding: 20px 16px;
+      padding: 20px 16px 40px;
       background-color: #fbf8f1;
       font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
       color: #333;
@@ -111,12 +111,45 @@
       font-weight: bold;
       cursor: pointer;
     }
+    /* QRコードと案内エリア */
+    .share-section {
+      max-width: 480px;
+      width: 100%;
+      margin-top: 28px;
+      background: #ffffff;
+      border-radius: 16px;
+      border: 1px dashed #c8beaf;
+      padding: 20px;
+      text-align: center;
+      box-sizing: border-box;
+    }
+    .share-title {
+      font-size: 16px;
+      font-weight: bold;
+      color: #5a7260;
+      margin-bottom: 8px;
+    }
+    .share-desc {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 14px;
+      line-height: 1.5;
+    }
+    .qr-image {
+      width: 140px;
+      height: 140px;
+      display: block;
+      margin: 0 auto;
+      border: 3px solid #f0e6d6;
+      border-radius: 10px;
+      background: #fff;
+    }
     .footer-bar {
       max-width: 480px;
       width: 100%;
       text-align: center;
-      margin-top: 24px;
-      font-size: 14px;
+      margin-top: 20px;
+      font-size: 13px;
       color: #7d8a80;
       line-height: 1.6;
     }
@@ -124,13 +157,13 @@
 </head>
 <body>
 
-  <!-- ヘッダー部分 -->
+  <!-- ヘッダー -->
   <div class="header-bar">
     <div class="salon-name">🌸 柏原サロン 🌸</div>
     <div class="app-title">昭和なつかしクイズ</div>
   </div>
 
-  <!-- クイズ本体カード -->
+  <!-- クイズカード -->
   <div class="card">
     <div class="badge" id="category">暮らしのなつかしクイズ</div>
     <div class="question" id="question">問題を読み込み中...</div>
@@ -144,10 +177,19 @@
     <button class="next-btn" id="next-btn" onclick="nextQuestion()">次の問題へ進む 🌸</button>
   </div>
 
-  <!-- フッター（作成者クレジット） -->
+  <!-- お友だち共有用 QRコード枠 -->
+  <div class="share-section">
+    <div class="share-title">📱 お友だちにも教える</div>
+    <div class="share-desc">サロンのお仲間やご家族のスマートフォンで、<br>このQRコードをカメラで読み取ると遊べます。</div>
+    <img class="qr-image" 
+         src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://hiro1960486.github.io/salon-quiz/" 
+         alt="サロンクイズのQRコード">
+  </div>
+
+  <!-- フッター（お試し版・作者クレジット） -->
   <div class="footer-bar">
-    柏原サロン専用アプリ<br>
-    企画・作成：田中裕之
+    ※本アプリは個人の趣味による試作・テスト版です。<br>
+    企画・作成：田中裕之（柏原サロン）
   </div>
 
 <script>
