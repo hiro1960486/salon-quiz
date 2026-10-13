@@ -67,7 +67,7 @@ async function finish(request,env){
  // Older browser versions send the answers together at the end.
  // An empty server-side list means no per-question responses were recorded.
  const hasRecorded=recorded&&recorded.length===session.question_count;
- const submitted=hasRecorded?recorded:data.answers;
+ const submitted=hasRecorded?recorded:((!recorded||recorded.length===0)?data.answers:recorded);
  if(!Array.isArray(submitted)||submitted.length!==session.question_count||submitted.some(x=>!Number.isInteger(x)||x<0||x>2))
    return json({error:"回答数が一致しません"},400);
  const duration=(hasRecorded?state.lastAnswerAt:Date.now())-session.started_at;
