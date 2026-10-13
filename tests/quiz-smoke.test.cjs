@@ -13,6 +13,7 @@ function setup(memory=new Map()) {
     }
     addEventListener(t,cb){this.handlers[t]=cb;}
     append(...nodes){this.children.push(...nodes);}
+    appendChild(node){this.children.push(node);return node;}
     replaceChildren(...nodes){this.children=[...nodes];}
     querySelectorAll(){return this.children.filter(e=>e instanceof Element);}
     click(){if(!this.disabled&&this.handlers.click)this.handlers.click();}
