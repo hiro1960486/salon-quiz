@@ -274,7 +274,40 @@
         : allQuizData.filter(q => q.genre === currentGenre);
 
       // シャッフルして最大10問を抽出
-      quizList = shuffleArray(filtered).slice(0, QUIZ_LIMIT);
+      // 各回の正解位置を1〜3番にほぼ均等に割り当てる。
+      // 問題データの正解インデックスは0始まりなので、並べ替え後に更新する。
+      // 通常7問＋難問3問（10問の場合）。ジャンル指定時も同じ割合。
+      const total = Math.min(QUIZ_LIMIT, filtered.length);
+      const hardPool = shuffleArray(filtered.filter(q => q.difficulty === 'hard'));
+      const normalPool = shuffleArray(filtered.filter(q => q.difficulty !== 'hard'));
+      const desiredHard = Math.round(total * 0.3);
+      const hardCount = Math.min(desiredHard, hardPool.length);
+      const normalCount = Math.min(total - hardCount, normalPool.length);
+      const selectedHard = hardPool.slice(0, hardCount);
+      const selectedNormal = normalPool.slice(0, normalCount);
+      // 難問の位置を全体へ分散。同じ区間に難問が固まらない。
+      const selected = Array(total);
+      for (let i = 0; i < hardCount; i++) {
+        const start = Math.floor(i * total / hardCount);
+        const end = Math.floor((i + 1) * total / hardCount);
+        const slot = start + Math.floor(Math.random() * (end - start));
+        selected[slot] = selectedHard[i];
+      }
+      let normalIndex = 0;
+      for (let i = 0; i < total; i++) {
+        if (!selected[i]) selected[i] = selectedNormal[normalIndex++];
+      }
+      // 正解の位置も1〜3番に均等にし、さらに毎回ランダム化。
+      const positions = shuffleArray(selected.map((_, i) => i % 3));
+      quizList = selected.map((q, i) => {
+        const correctChoice = q.choices[q.correct];
+        const distractors = shuffleArray(
+          q.choices.filter((_, index) => index !== q.correct)
+        );
+        const choices = [...distractors];
+        choices.splice(positions[i], 0, correctChoice);
+        return { ...q, choices, correct: positions[i] };
+      });
       currentIndex = 0;
       loadQuestion();
     }
