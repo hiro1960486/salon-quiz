@@ -1,5 +1,5 @@
 const fs=require("node:fs"),vm=require("node:vm");
-const names=["life","music","tv","history-sports","school-snacks","kasugai-rail","showa-leisure","nagoya-yomi"];
+const names=["life","music","tv","history-sports","school-snacks","kasugai-rail","showa-leisure","nagoya-yomi","retro-batch01"];
 const context=vm.createContext({});
 for(const name of names)vm.runInContext(fs.readFileSync("data/"+name+".js","utf8"),context);
 vm.runInContext(fs.readFileSync("quiz-data.js","utf8"),context);
