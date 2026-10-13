@@ -276,11 +276,11 @@
       // シャッフルして最大10問を抽出
       // 各回の正解位置を1〜3番にほぼ均等に割り当てる。
       // 問題データの正解インデックスは0始まりなので、並べ替え後に更新する。
-      // 通常7問＋難問3問（10問の場合）。ジャンル指定時も同じ割合。
+      // 通常6問＋難問4問（10問の場合）。ジャンル指定時も同じ割合。
       const total = Math.min(QUIZ_LIMIT, filtered.length);
       const hardPool = shuffleArray(filtered.filter(q => q.difficulty === 'hard'));
       const normalPool = shuffleArray(filtered.filter(q => q.difficulty !== 'hard'));
-      const desiredHard = Math.round(total * 0.3);
+      const desiredHard = Math.round(total * 0.4);
       const hardCount = Math.min(desiredHard, hardPool.length);
       const normalCount = Math.min(total - hardCount, normalPool.length);
       const selectedHard = hardPool.slice(0, hardCount);
