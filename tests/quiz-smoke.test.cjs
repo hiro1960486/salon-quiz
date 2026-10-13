@@ -3,7 +3,7 @@ const vm=require("node:vm");
 const assert=require("node:assert/strict");
 const path=require("node:path");
 const root=path.resolve(__dirname,"..");
-const scripts=["data/life.js","data/music.js","data/tv.js","data/history-sports.js","data/school-snacks.js","data/kasugai-rail.js","data/showa-leisure.js","data/nagoya-yomi.js","data/retro-batch01.js","quiz-data.js","quiz-engine.js"];
+const scripts=["data/life.js","data/music.js","data/tv.js","data/history-sports.js","data/school-snacks.js","data/kasugai-rail.js","data/showa-leisure.js","data/nagoya-yomi.js","data/retro-batch01.js","data/retro-batch02.js","quiz-data.js","quiz-engine.js"];
 function setup(memory=new Map()) {
   class Element {
     constructor(id="") {
