@@ -1,5 +1,5 @@
 import bank from "../questions.json";
-const allowedGenres = new Set(["all","暮らし","音楽","テレビ・芸能","出来事・スポーツ","学校・おやつ","東海"]);
+const allowedGenres = new Set(["all","暮らし","音楽","テレビ・芸能","出来事・スポーツ","学校・おやつ","春日井・中央線","昭和の旅・暮らし","東海"]);
 const allowedCounts = new Set([10,20,30]);
 const enc = new TextEncoder();
 const allowedOrigin = "https://hiro1960486.github.io";
