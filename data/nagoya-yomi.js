@@ -547,11 +547,11 @@ const quiz_nagoya_yomi = [
   {
     "id": "nagoya-history-010",
     "genre": "名古屋の難読地名",
-    "question": "名古屋市の駅名「鶴舞駅」の読みは？",
+    "question": "昭和49年の名古屋市電の最後の運転は何と呼ばれた？",
     "choices": [
-      "つるまいえき",
-      "つるまえき",
-      "かくぶえき"
+      "サヨナラ運転",
+      "歓迎運転",
+      "開業運転"
     ],
     "correct": 0,
     "difficulty": "hard",
