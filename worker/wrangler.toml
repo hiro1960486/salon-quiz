@@ -5,4 +5,4 @@ compatibility_date = "2026-10-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "salon-quiz-ranking"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_id = "2240ca42-0624-40c9-9594-88b93107c2e2"
