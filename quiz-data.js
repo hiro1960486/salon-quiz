@@ -8,5 +8,6 @@ const allQuizData = [
   ...quiz_school_snacks,
   ...quiz_kasugai_rail,
   ...quiz_showa_leisure,
-  ...quiz_nagoya_yomi
+  ...quiz_nagoya_yomi,
+  ...quiz_retro_batch01
 ];
