@@ -209,7 +209,7 @@
     <select id="round-length" onchange="initQuiz()" style="font-size:18px;padding:8px;border-radius:8px">
       <option value="10">10問</option><option value="20">20問</option><option value="30">30問</option>
     </select>
-    <strong id="score-counter" aria-live="polite">正解 0 問</strong>
+    <strong id="score-counter" aria-live="polite">解答 0 / 10問・正解 0問</strong>
   </div>
   <!-- クイズカード -->
   <div class="card">
@@ -217,6 +217,7 @@
     <div class="badge" id="category">読み込み中...</div>
     <div class="question" id="question">問題を準備しています...</div>
     <div id="choices"></div>
+    <div id="round-summary" class="result-box" aria-live="polite"></div>
 
     <div class="result-box" id="result-box">
       <div class="result-title" id="result-title"></div>
@@ -370,9 +371,19 @@
         choices.splice(positions[i], 0, correctChoice);
         return { ...q, choices, correct: positions[i] };
       });
+      if (quizList.length !== total) {
+        console.error('出題数の不一致:', { requested: total, created: quizList.length });
+        document.getElementById('question').textContent = '問題の準備に失敗しました。再読み込みしてください。';
+        document.getElementById('q-counter').textContent = '';
+        document.getElementById('choices').replaceChildren();
+        document.getElementById('next-btn').style.display = 'none';
+        return;
+      }
       currentIndex = 0;
       correctAnswers = 0;
-      document.getElementById('score-counter').textContent = '正解 0 問';
+      const summary = document.getElementById('round-summary');
+      summary.style.display = 'none';
+      document.getElementById('score-counter').textContent = `解答 0 / ${total}問・正解 0問`;
       loadQuestion();
     }
 
@@ -382,6 +393,7 @@
       document.getElementById('category').textContent = q.genre;
       document.getElementById('question').textContent = q.question;
       document.getElementById('result-box').style.display = 'none';
+      document.getElementById('round-summary').style.display = 'none';
       document.getElementById('next-btn').style.display = 'none';
 
       const choicesContainer = document.getElementById('choices');
@@ -400,7 +412,7 @@
       const q = quizList[currentIndex];
       const isCorrect = selectedIndex === q.correct;
       if (isCorrect) correctAnswers++;
-      document.getElementById('score-counter').textContent = `正解 ${correctAnswers} / ${quizList.length} 問`;
+      document.getElementById('score-counter').textContent = `解答 ${currentIndex + 1} / ${quizList.length}問・正解 ${correctAnswers}問`;
       
       const buttons = document.querySelectorAll('.choice-btn');
       buttons.forEach(btn => btn.disabled = true);
@@ -418,7 +430,7 @@
       if (currentIndex + 1 < quizList.length) {
         nextBtn.textContent = "次の問題へ進む 🌸";
       } else {
-        nextBtn.textContent = `終了！${correctAnswers}/${quizList.length}問正解（正答率${Math.round(correctAnswers / quizList.length * 100)}%）もう一度 🔄`;
+        nextBtn.textContent = '結果を見る 🌸';
       }
       nextBtn.style.display = 'block';
     }
@@ -426,7 +438,20 @@
     function nextQuestion() {
       currentIndex++;
       if (currentIndex >= quizList.length) {
-        initQuiz();
+        const total = quizList.length;
+        const percent = Math.round(correctAnswers / total * 100);
+        document.getElementById('q-counter').textContent = `全 ${total} 問 完了`;
+        document.getElementById('question').textContent = 'チャレンジ終了！おつかれさまでした 🌸';
+        document.getElementById('choices').replaceChildren();
+        document.getElementById('result-box').style.display = 'none';
+        document.getElementById('round-summary').innerHTML =
+          `<div class="result-title">結果発表 🎉</div><div class="explanation">挑戦：${total}問<br>解答済み：${total}問<br>正解：${correctAnswers}問<br>正答率：${percent}%</div>`;
+        document.getElementById('round-summary').style.display = 'block';
+        document.getElementById('next-btn').textContent = 'もう一度チャレンジ 🔄';
+        document.getElementById('next-btn').onclick = () => {
+          document.getElementById('next-btn').onclick = nextQuestion;
+          initQuiz();
+        };
       } else {
         loadQuestion();
       }
