@@ -278,17 +278,19 @@
       );
       if (!pool.length || count <= 0) return [];
       const key = QUEUE_PREFIX + genre + ':' + difficulty;
-      let pending = [];
+      const ids = pool.map(q => allQuizData.indexOf(q));
+      let pending = [], known = [];
       try {
         const stored = JSON.parse(localStorage.getItem(key));
-        if (Array.isArray(stored)) pending = stored.filter(id =>
-          Number.isInteger(id) && pool.some(q => allQuizData.indexOf(q) === id)
-        );
-      } catch (err) { /* ストレージ未使用時も動作を継続 */ }
-      // 新規の問題が追加された場合は、未出題として待ち行列に加える。
-      const ids = pool.map(q => allQuizData.indexOf(q));
-      const missing = shuffleArray(ids.filter(id => !pending.includes(id)));
-      pending.push(...missing);
+        if (stored && Array.isArray(stored.pending) && Array.isArray(stored.known)) {
+          known = stored.known.filter(id => ids.includes(id));
+          pending = stored.pending.filter(id => ids.includes(id));
+        }
+      } catch (err) { /* ストレージが利用できなくても実行可能 */ }
+      // 新しい問題だけを未出題の列へ追加する。
+      pending.push(...shuffleArray(ids.filter(id => !known.includes(id))));
+      known = [...ids];
+      if (!pending.length) pending = shuffleArray(ids);
       const selected = [];
       for (let i = 0; i < count && i < pool.length; i++) {
         if (!pending.length) {
@@ -306,7 +308,7 @@
         recentQuestions.clear();
         history.forEach(id => recentQuestions.add(id));
       }
-      try { localStorage.setItem(key, JSON.stringify(pending)); } catch (err) {}
+      try { localStorage.setItem(key, JSON.stringify({ pending, known })); } catch (err) {}
       return selected.map(id => allQuizData[id]);
     }
 
