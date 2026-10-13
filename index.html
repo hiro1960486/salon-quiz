@@ -282,7 +282,7 @@
 
     function drawFromCycle(genre, difficulty, count) {
       const pool = allQuizData.filter(q =>
-        q.genre === genre && (q.difficulty === 'hard') === (difficulty === 'hard')
+        q.genre === genre && (q.difficulty || 'normal') === difficulty
       );
       if (!pool.length || count <= 0) return [];
       const key = QUEUE_PREFIX + genre + ':' + difficulty;
@@ -323,44 +323,37 @@
     // 各回の出題数に合わせて、ジャンルと難易度の割当数を均等化する。
     function initQuiz() {
       const total = Number(document.getElementById('round-length').value);
+      // 通常60％・難問30％・超難問10％（従来の難しめ40％を維持）。
+      const superCount = Math.round(total * 0.1);
+      const hardCount = Math.round(total * 0.3);
+      const counts = { normal: total - hardCount - superCount, hard: hardCount, super: superCount };
+      const difficulties = shuffleArray(Object.entries(counts).flatMap(([d, n]) => Array(n).fill(d)));
       let selected = [];
       if (currentGenre === 'all') {
+        // どの問題数でも5ジャンルから同数ずつ。難易度は毎回割り当て直す。
         const genres = shuffleArray([...new Set(allQuizData.map(q => q.genre))]);
-        // 10/20/30問のどの場合も、各ジャンルの問題数が同じ。
-        const perGenre = total / genres.length;
-        const quota = Object.fromEntries(genres.map(g => [g, {
-          hard: Math.floor(perGenre * 0.4), normal: perGenre - Math.floor(perGenre * 0.4)
-        }]));
-        // 割り切れない難問枠はランダムなジャンルに一つずつ配分。
-        let remainder = Math.round(total * 0.4)
-          - genres.reduce((n, g) => n + quota[g].hard, 0);
-        for (const genre of genres) {
-          if (remainder-- <= 0) break;
-          quota[genre].hard++;
-          quota[genre].normal--;
-        }
-        genres.forEach(g => {
-          selected.push(...drawFromCycle(g, 'hard', quota[g].hard));
-          selected.push(...drawFromCycle(g, 'normal', quota[g].normal));
-        });
+        const genreSlots = shuffleArray(genres.flatMap(g => Array(total / genres.length).fill(g)));
+        selected = difficulties.map((difficulty, i) =>
+          drawFromCycle(genreSlots[i], difficulty, 1)[0]
+        );
       } else {
-        const nHard = Math.round(total * 0.4);
-        selected.push(...drawFromCycle(currentGenre, 'hard', nHard));
-        selected.push(...drawFromCycle(currentGenre, 'normal', total - nHard));
+        selected = difficulties.map(difficulty => drawFromCycle(currentGenre, difficulty, 1)[0]);
       }
-      // 難問を複数の区間へ散らして、1か所に固めない。
-      const difficult = shuffleArray(selected.filter(q => q.difficulty === 'hard'));
-      const normal = shuffleArray(selected.filter(q => q.difficulty !== 'hard'));
-      const arranged = Array(selected.length);
-      difficult.forEach((q, i) => {
-        const start = Math.floor(i * arranged.length / difficult.length);
-        const end = Math.floor((i + 1) * arranged.length / difficult.length);
-        const slot = start + Math.floor(Math.random() * (end - start));
-        arranged[slot] = q;
+      // 問題の順番をランダム化しつつ、超難問が続かないようにする。
+      const normal = shuffleArray(selected.filter(q => q.difficulty !== 'hard' && q.difficulty !== 'super'));
+      const hard = shuffleArray(selected.filter(q => q.difficulty === 'hard'));
+      const extreme = shuffleArray(selected.filter(q => q.difficulty === 'super'));
+      const arranged = Array(total);
+      extreme.forEach((q, i) => {
+        const start = Math.floor(i * total / extreme.length);
+        const end = Math.floor((i + 1) * total / extreme.length);
+        arranged[start + Math.floor(Math.random() * (end - start))] = q;
       });
-      let normalIndex = 0;
-      for (let i = 0; i < arranged.length; i++) {
-        if (!arranged[i]) arranged[i] = normal[normalIndex++];
+      const open = shuffleArray(Array.from({length: total}, (_, i) => i).filter(i => !arranged[i]));
+      hard.forEach((q, i) => { arranged[open[i]] = q; });
+      let ni = 0;
+      for (let i = 0; i < total; i++) {
+        if (!arranged[i]) arranged[i] = normal[ni++];
       }
       // 1,2,3番の正解位置を均等配分してからランダム化する。
       const positions = shuffleArray(arranged.map((_, i) => i % 3));
