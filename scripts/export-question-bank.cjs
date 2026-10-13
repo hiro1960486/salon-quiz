@@ -5,7 +5,7 @@ for(const name of names)vm.runInContext(fs.readFileSync("data/"+name+".js","utf8
 vm.runInContext(fs.readFileSync("quiz-data.js","utf8"),context);
 const bank=vm.runInContext("allQuizData",context);
 function hash(text){let h=2166136261;for(const c of text){h^=c.charCodeAt(0);h=Math.imul(h,16777619);}return(h>>>0).toString(36);}
-const output=bank.map(q=>({id:q.id||"q-"+hash(q.genre+"|"+q.question),genre:q.genre,question:q.question,choices:q.choices,correct:q.correct,region:q.region||null}));
+const output=bank.map(q=>({id:q.id||"q-"+hash(q.genre+"|"+q.question),genre:q.genre,question:q.question,choices:q.choices,correct:q.correct,region:q.region||null,talk:q.talk||''}));
 const ids=new Set(output.map(q=>q.id));
 if(ids.size!==output.length||output.some(q=>q.choices?.length!==3||!Number.isInteger(q.correct)||q.correct<0||q.correct>2))throw Error("Question validation failed");
 fs.mkdirSync("worker",{recursive:true});
