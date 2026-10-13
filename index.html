@@ -204,6 +204,13 @@
     <button class="genre-btn" onclick="selectGenre('学校・おやつ')">おやつ・遊び</button>
   </div>
 
+  <div class="round-setting" style="max-width:480px;width:100%;display:flex;align-items:center;gap:12px;justify-content:center;margin-bottom:16px">
+    <label for="round-length">チャレンジ問題数</label>
+    <select id="round-length" onchange="initQuiz()" style="font-size:18px;padding:8px;border-radius:8px">
+      <option value="10">10問</option><option value="20">20問</option><option value="30">30問</option>
+    </select>
+    <strong id="score-counter" aria-live="polite">正解 0 問</strong>
+  </div>
   <!-- クイズカード -->
   <div class="card">
     <span class="question-count" id="q-counter"></span>
@@ -241,7 +248,7 @@
     let currentGenre = 'all';
     let quizList = [];
     let currentIndex = 0;
-    const QUIZ_LIMIT = 10; // 1回あたりの出題数
+    let correctAnswers = 0;
 
     function shuffleArray(array) {
       const arr = [...array];
@@ -312,22 +319,35 @@
       return selected.map(id => allQuizData[id]);
     }
 
+    // 各回の出題数に合わせて、ジャンルと難易度の割当数を均等化する。
     function initQuiz() {
+      const total = Number(document.getElementById('round-length').value);
       let selected = [];
       if (currentGenre === 'all') {
-        // 各ジャンルを2問ずつ：難問4ジャンル×1問＋通常6問。
         const genres = shuffleArray([...new Set(allQuizData.map(q => q.genre))]);
-        const hardGenres = new Set(genres.slice(0, 4));
-        genres.forEach(genre => {
-          const hardCount = hardGenres.has(genre) ? 1 : 0;
-          selected.push(...drawFromCycle(genre, 'hard', hardCount));
-          selected.push(...drawFromCycle(genre, 'normal', 2 - hardCount));
+        // 10/20/30問のどの場合も、各ジャンルの問題数が同じ。
+        const perGenre = total / genres.length;
+        const quota = Object.fromEntries(genres.map(g => [g, {
+          hard: Math.floor(perGenre * 0.4), normal: perGenre - Math.floor(perGenre * 0.4)
+        }]));
+        // 割り切れない難問枠はランダムなジャンルに一つずつ配分。
+        let remainder = Math.round(total * 0.4)
+          - genres.reduce((n, g) => n + quota[g].hard, 0);
+        for (const genre of genres) {
+          if (remainder-- <= 0) break;
+          quota[genre].hard++;
+          quota[genre].normal--;
+        }
+        genres.forEach(g => {
+          selected.push(...drawFromCycle(g, 'hard', quota[g].hard));
+          selected.push(...drawFromCycle(g, 'normal', quota[g].normal));
         });
       } else {
-        selected.push(...drawFromCycle(currentGenre, 'hard', 4));
-        selected.push(...drawFromCycle(currentGenre, 'normal', 6));
+        const nHard = Math.round(total * 0.4);
+        selected.push(...drawFromCycle(currentGenre, 'hard', nHard));
+        selected.push(...drawFromCycle(currentGenre, 'normal', total - nHard));
       }
-      // 難問4つを各区間に配置し、全体の問題順は毎回変える。
+      // 難問を複数の区間へ散らして、1か所に固めない。
       const difficult = shuffleArray(selected.filter(q => q.difficulty === 'hard'));
       const normal = shuffleArray(selected.filter(q => q.difficulty !== 'hard'));
       const arranged = Array(selected.length);
@@ -341,7 +361,7 @@
       for (let i = 0; i < arranged.length; i++) {
         if (!arranged[i]) arranged[i] = normal[normalIndex++];
       }
-      // 各回の正解位置は1〜3番にほぼ均等。
+      // 1,2,3番の正解位置を均等配分してからランダム化する。
       const positions = shuffleArray(arranged.map((_, i) => i % 3));
       quizList = arranged.map((q, i) => {
         const correctChoice = q.choices[q.correct];
@@ -351,6 +371,8 @@
         return { ...q, choices, correct: positions[i] };
       });
       currentIndex = 0;
+      correctAnswers = 0;
+      document.getElementById('score-counter').textContent = '正解 0 問';
       loadQuestion();
     }
 
@@ -377,6 +399,8 @@
     function checkAnswer(selectedIndex) {
       const q = quizList[currentIndex];
       const isCorrect = selectedIndex === q.correct;
+      if (isCorrect) correctAnswers++;
+      document.getElementById('score-counter').textContent = `正解 ${correctAnswers} / ${quizList.length} 問`;
       
       const buttons = document.querySelectorAll('.choice-btn');
       buttons.forEach(btn => btn.disabled = true);
@@ -394,7 +418,7 @@
       if (currentIndex + 1 < quizList.length) {
         nextBtn.textContent = "次の問題へ進む 🌸";
       } else {
-        nextBtn.textContent = "この回は終了！もう一度遊ぶ（シャッフル）🔄";
+        nextBtn.textContent = `終了！${correctAnswers}/${quizList.length}問正解（正答率${Math.round(correctAnswers / quizList.length * 100)}%）もう一度 🔄`;
       }
       nextBtn.style.display = 'block';
     }
