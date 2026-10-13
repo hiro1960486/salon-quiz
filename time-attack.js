@@ -3,26 +3,37 @@
  const endpoint=String(window.SALON_RANKING_API||"").replace(/\/$/,"");
  let session=null,questions=[],answers=[],index=0,starting=0,ticker=null,inFlight=false;
  let sound=true,audio=null;
+ // Custom audio is used if both user-provided MP3 assets are available.
+ const soundFiles={correct:"assets/sounds/correct.mp3",wrong:"assets/sounds/wrong.mp3"};
+ const soundPlayers={};
  function chime(hit){
+   if(!sound)return;
+   const type=hit?"correct":"wrong";
+   const url=soundFiles[type];
+   try {
+     const player=soundPlayers[type]||(soundPlayers[type]=new Audio(url));
+     player.currentTime=0;
+     const promise=player.play();
+     if(promise&&typeof promise.catch==="function")promise.catch(()=>fallbackChime(hit));
+   }catch(_){fallbackChime(hit);}
+ }
+ function fallbackChime(hit){
    if(!sound)return;
    try{
      const Ctx=window.AudioContext||window.webkitAudioContext;
      if(!Ctx)return;
      audio=audio||new Ctx();
      if(audio.state==="suspended")audio.resume();
-     const play=(freq,delay,duration)=>{
-       const osc=audio.createOscillator(),gain=audio.createGain(),t=audio.currentTime+delay;
-       osc.type="sine";osc.frequency.value=freq;
-       gain.gain.setValueAtTime(0.0001,t);
-       gain.gain.exponentialRampToValueAtTime(0.09,t+0.015);
-       gain.gain.exponentialRampToValueAtTime(0.0001,t+duration);
-       osc.connect(gain).connect(audio.destination);
-       osc.start(t);osc.stop(t+duration+0.02);
-     };
-     if(hit){play(660,0,0.14);play(880,0.15,0.2);}
-     else play(330,0,0.22);
+     const osc=audio.createOscillator(),gain=audio.createGain(),t=audio.currentTime;
+     osc.type="sine";osc.frequency.value=hit?784:330;
+     gain.gain.setValueAtTime(0.0001,t);
+     gain.gain.exponentialRampToValueAtTime(0.07,t+0.02);
+     gain.gain.exponentialRampToValueAtTime(0.0001,t+0.22);
+     osc.connect(gain).connect(audio.destination);
+     osc.start(t);osc.stop(t+0.24);
    }catch(_){}
  }
+
  const fmt=ms=>{const s=Math.floor(ms/1000);return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")+"."+Math.floor(ms%1000/100);};
  function notice(msg){$("notice").textContent=msg;}
  async function api(path,body){
