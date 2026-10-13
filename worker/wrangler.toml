@@ -1,0 +1,8 @@
+name = "salon-quiz-ranking"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+# D1 database_id must be filled after: npx wrangler d1 create salon-quiz-ranking
+[[d1_databases]]
+binding = "DB"
+database_name = "salon-quiz-ranking"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"

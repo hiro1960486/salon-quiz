@@ -1,0 +1,21 @@
+name: Ranking backend checks
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/export-question-bank.cjs
+      - run: node --check worker/src/index.js
+      - run: node --check time-attack.js
+      - run: node --check ranking.js
+      - run: node -e "const q=require('./worker/questions.json'); if(q.length!==470) process.exit(1); console.log('Questions:',q.length)"
