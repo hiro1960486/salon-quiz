@@ -64,10 +64,13 @@ async function finish(request,env){
  const expected=JSON.parse(session.answer_keys);
  const state=JSON.parse(session.question_ids);
  const recorded=Array.isArray(state.answers)?state.answers:null;
- const submitted=recorded||data.answers;
+ // Older browser versions send the answers together at the end.
+ // An empty server-side list means no per-question responses were recorded.
+ const hasRecorded=recorded&&recorded.length===session.question_count;
+ const submitted=hasRecorded?recorded:data.answers;
  if(!Array.isArray(submitted)||submitted.length!==session.question_count||submitted.some(x=>!Number.isInteger(x)||x<0||x>2))
    return json({error:"回答数が一致しません"},400);
- const duration=(recorded?state.lastAnswerAt:Date.now())-session.started_at;
+ const duration=(hasRecorded?state.lastAnswerAt:Date.now())-session.started_at;
  if(duration<1500||duration>30*60*1000)return json({error:"計測時間が正しくありません"},400);
  const correct=submitted.filter((answer,i)=>answer===expected[i]).length;
  const scoreId=randomToken();
