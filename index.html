@@ -268,42 +268,82 @@
       initQuiz();
     }
 
-    function initQuiz() {
-      let filtered = (currentGenre === 'all') 
-        ? allQuizData 
-        : allQuizData.filter(q => q.genre === currentGenre);
+    // 問題の使用履歴はブラウザー内で保持。全件を使い切ったら新しい順に組み直す。
+    const QUEUE_PREFIX = 'salonQuizCycleV2:';
+    const recentQuestions = new Set();
 
-      // シャッフルして最大10問を抽出
-      // 各回の正解位置を1〜3番にほぼ均等に割り当てる。
-      // 問題データの正解インデックスは0始まりなので、並べ替え後に更新する。
-      // 通常6問＋難問4問（10問の場合）。ジャンル指定時も同じ割合。
-      const total = Math.min(QUIZ_LIMIT, filtered.length);
-      const hardPool = shuffleArray(filtered.filter(q => q.difficulty === 'hard'));
-      const normalPool = shuffleArray(filtered.filter(q => q.difficulty !== 'hard'));
-      const desiredHard = Math.round(total * 0.4);
-      const hardCount = Math.min(desiredHard, hardPool.length);
-      const normalCount = Math.min(total - hardCount, normalPool.length);
-      const selectedHard = hardPool.slice(0, hardCount);
-      const selectedNormal = normalPool.slice(0, normalCount);
-      // 難問の位置を全体へ分散。同じ区間に難問が固まらない。
-      const selected = Array(total);
-      for (let i = 0; i < hardCount; i++) {
-        const start = Math.floor(i * total / hardCount);
-        const end = Math.floor((i + 1) * total / hardCount);
-        const slot = start + Math.floor(Math.random() * (end - start));
-        selected[slot] = selectedHard[i];
-      }
-      let normalIndex = 0;
-      for (let i = 0; i < total; i++) {
-        if (!selected[i]) selected[i] = selectedNormal[normalIndex++];
-      }
-      // 正解の位置も1〜3番に均等にし、さらに毎回ランダム化。
-      const positions = shuffleArray(selected.map((_, i) => i % 3));
-      quizList = selected.map((q, i) => {
-        const correctChoice = q.choices[q.correct];
-        const distractors = shuffleArray(
-          q.choices.filter((_, index) => index !== q.correct)
+    function drawFromCycle(genre, difficulty, count) {
+      const pool = allQuizData.filter(q =>
+        q.genre === genre && (q.difficulty === 'hard') === (difficulty === 'hard')
+      );
+      if (!pool.length || count <= 0) return [];
+      const key = QUEUE_PREFIX + genre + ':' + difficulty;
+      let pending = [];
+      try {
+        const stored = JSON.parse(localStorage.getItem(key));
+        if (Array.isArray(stored)) pending = stored.filter(id =>
+          Number.isInteger(id) && pool.some(q => allQuizData.indexOf(q) === id)
         );
+      } catch (err) { /* ストレージ未使用時も動作を継続 */ }
+      // 新規の問題が追加された場合は、未出題として待ち行列に加える。
+      const ids = pool.map(q => allQuizData.indexOf(q));
+      const missing = shuffleArray(ids.filter(id => !pending.includes(id)));
+      pending.push(...missing);
+      const selected = [];
+      for (let i = 0; i < count && i < pool.length; i++) {
+        if (!pending.length) {
+          pending = shuffleArray(ids.filter(id => !selected.includes(id)));
+          // 周期の境目でも直前と同じ問題を出しにくくする。
+          pending.sort((a, b) => Number(recentQuestions.has(a)) - Number(recentQuestions.has(b)));
+        }
+        const next = pending.shift();
+        selected.push(next);
+        recentQuestions.add(next);
+      }
+      if (recentQuestions.size > 20) {
+        // 最近の20問だけを記録（古いものから削除）
+        const history = [...recentQuestions].slice(-20);
+        recentQuestions.clear();
+        history.forEach(id => recentQuestions.add(id));
+      }
+      try { localStorage.setItem(key, JSON.stringify(pending)); } catch (err) {}
+      return selected.map(id => allQuizData[id]);
+    }
+
+    function initQuiz() {
+      let selected = [];
+      if (currentGenre === 'all') {
+        // 各ジャンルを2問ずつ：難問4ジャンル×1問＋通常6問。
+        const genres = shuffleArray([...new Set(allQuizData.map(q => q.genre))]);
+        const hardGenres = new Set(genres.slice(0, 4));
+        genres.forEach(genre => {
+          const hardCount = hardGenres.has(genre) ? 1 : 0;
+          selected.push(...drawFromCycle(genre, 'hard', hardCount));
+          selected.push(...drawFromCycle(genre, 'normal', 2 - hardCount));
+        });
+      } else {
+        selected.push(...drawFromCycle(currentGenre, 'hard', 4));
+        selected.push(...drawFromCycle(currentGenre, 'normal', 6));
+      }
+      // 難問4つを各区間に配置し、全体の問題順は毎回変える。
+      const difficult = shuffleArray(selected.filter(q => q.difficulty === 'hard'));
+      const normal = shuffleArray(selected.filter(q => q.difficulty !== 'hard'));
+      const arranged = Array(selected.length);
+      difficult.forEach((q, i) => {
+        const start = Math.floor(i * arranged.length / difficult.length);
+        const end = Math.floor((i + 1) * arranged.length / difficult.length);
+        const slot = start + Math.floor(Math.random() * (end - start));
+        arranged[slot] = q;
+      });
+      let normalIndex = 0;
+      for (let i = 0; i < arranged.length; i++) {
+        if (!arranged[i]) arranged[i] = normal[normalIndex++];
+      }
+      // 各回の正解位置は1〜3番にほぼ均等。
+      const positions = shuffleArray(arranged.map((_, i) => i % 3));
+      quizList = arranged.map((q, i) => {
+        const correctChoice = q.choices[q.correct];
+        const distractors = shuffleArray(q.choices.filter((_, index) => index !== q.correct));
         const choices = [...distractors];
         choices.splice(positions[i], 0, correctChoice);
         return { ...q, choices, correct: positions[i] };
@@ -312,7 +352,7 @@
       loadQuestion();
     }
 
-    function loadQuestion() {
+        function loadQuestion() {
       const q = quizList[currentIndex];
       document.getElementById('q-counter').textContent = `第 ${currentIndex + 1} 問 / 全 ${quizList.length} 問`;
       document.getElementById('category').textContent = q.genre;
