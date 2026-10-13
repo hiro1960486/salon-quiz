@@ -5,5 +5,7 @@ const allQuizData = [
   ...quiz_music,
   ...quiz_tv,
   ...quiz_history_sports,
-  ...quiz_school_snacks
+  ...quiz_school_snacks,
+  ...quiz_kasugai_rail,
+  ...quiz_showa_leisure
 ];
